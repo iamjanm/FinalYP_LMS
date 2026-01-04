@@ -1,21 +1,20 @@
-# version: "3.9"
-
+# docker-compose.yml
 services:
   backend:
     build: ./Server
     container_name: backend
     restart: always
     ports:
-      - "5000:5000"
+      - "3000:3000"
     env_file:
-      - ./Server/.env  # Make sure this file contains MONGODB_URL
-    depends_on: []
-  
+      - ./Server/.env
+    # depends_on removed because we are using Atlas
+
   frontend:
     build: ./Client
     container_name: frontend
     restart: always
     ports:
-      - "5174:80"
+      - "5173:80"
     depends_on:
       - backend

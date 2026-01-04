@@ -35,7 +35,9 @@ app.use(morgan('dev'));
 app.use('/ping', function (_req, res) {
     res.send('Pong');
 })
-
+app.use("/", (_req, res) => {
+    res.send("Server is running")
+});
 app.use('/api/v1/user', userRoutes)
 app.use("/api/v1/admin", adminRouter);
 app.use('/api/v1/course', courseRoutes)
