@@ -21,14 +21,35 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+// const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+// console.log("FRONTEND_URL",FRONTEND_URL);
+
+// app.use(
+//   cors({
+//     origin: FRONTEND_URL,
+//     credentials: false,
+//     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//   })
+// );
+
+
+
+
+
+
+// const allowedOrigins = [
+//   'http://localhost:5173',
+//   process.env.FRONTEND_URL
+// ].filter(Boolean);
+
 app.use(
   cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: true,          
+    credentials: true,     
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
 );
+
 
 // Disable caching for API responses to avoid 304 Not Modified responses that return no body
 // This ensures clients always receive the JSON payload instead of relying on conditional GETs
@@ -36,7 +57,7 @@ app.use('/api/v1', (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   next();
 });
-app.options('*', cors({ origin: FRONTEND_URL, credentials: true }));
+// app.options('*', cors({ origin: FRONTEND_URL, credentials: false }));
 
 app.use(cookieParser());
 
