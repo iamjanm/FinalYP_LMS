@@ -23,7 +23,7 @@ function CourseList(){
            <div className=" min-h-[90vh]   pt-12  flex flex-col gap-10 text-white">
                 <h1 className="text-center text-3xl  font-semibold">
                     Explore the course made by 
-                    <span className=" font-bold text-yellow-500">
+                    <span className=" font-bold text-yellow-500 ml-2">
                         Industry experts
                     </span>
                 </h1>

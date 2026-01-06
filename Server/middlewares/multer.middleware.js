@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
 
 const fileFilter = (_req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  const allowed = [".jpg", ".jpeg", ".webp", ".png", ".mp4"];
+  const allowed = [".jpg", ".jpeg", ".webp", ".png", ".mp4", ".pdf", ".doc", ".docx", ".txt", ".ppt", ".pptx"];
   if (!allowed.includes(ext)) {
     cb(new Error(`Unsupported file type: ${ext}`), false);
     return;

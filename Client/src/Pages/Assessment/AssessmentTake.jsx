@@ -22,11 +22,11 @@ export default function AssessmentTake() {
     if (res?.payload) { toast.success('Submitted'); navigate(`/assessment/result/${id}`, { state: res.payload }); }
   }
 
-  if (!assessment) return <HomeLayout><div className="min-h-[90vh] p-8">Loading...</div></HomeLayout>;
+  if (!assessment) return <HomeLayout><div className="min-h-[90vh] p-16">Loading...</div></HomeLayout>;
 
   return (
     <HomeLayout>
-      <div className="min-h-[90vh] p-8 text-white">
+      <div className="min-h-[90vh] p-8 px-16 text-white">
         <h1 className="text-3xl mb-2">{assessment.title}</h1>
         <p className="mb-4">{assessment.description}</p>
         <form onSubmit={handleSubmit} className="max-w-2xl">
