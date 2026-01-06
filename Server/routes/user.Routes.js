@@ -12,8 +12,6 @@ import {
  changePassword,
  updateUser,
  adminChangePassword,
- verifyEmail,
- resendVerificationEmail,
 } from "../controllers/user.controller.js";
 import { authorizedRoles, isLoggedIn } from "../middlewares/auth.middlewares.js";
 import upload from "../middlewares/multer.middleware.js"; // use this
@@ -51,15 +49,6 @@ router.post("/reset", forgotPassword);
  */
 router.post("/reset/:resetToken", resetPassword);
 
-/**
- * @route POST /verify-email/:token
- */
-router.post("/verify-email/:token", verifyEmail);
-
-/**
- * @route POST /resend-verification
- */
-router.post("/resend-verification", resendVerificationEmail);
 
 /**
  * @route POST /change-password

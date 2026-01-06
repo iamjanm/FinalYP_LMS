@@ -17,6 +17,8 @@ function AdminDeshboard() {
 
     const { allUsersCount, allUsers } = useSelector((state) => state.stat);
     console.log("allUsers dtaa", allUsersCount);
+    const usersLength = allUsers?.length || 0;
+
 
 
     const myCoures = useSelector((state) => state?.course?.courseData);
@@ -87,7 +89,7 @@ function AdminDeshboard() {
                                 <div className="flex items-center justify-between p-5 gap-5 rounded-md shadow-md">
                                     <div className="flex flex-col items-center">
                                         <p className="font-semibold">Registered Users</p>
-                                        <h3 className="text-4xl font-bold">{allUsersCount}</h3>
+                                        <h3 className="text-4xl font-bold">{usersLength}</h3>
                                     </div>
                                     <FaUsers className="text-yellow-500 text-5xl" />
                                 </div>
@@ -137,14 +139,34 @@ function AdminDeshboard() {
                             <h1 className="text-center  text-2xl sm:text-3xl font-semibold">
                                 Courses overview
                             </h1>
-                            <button
-                                onClick={() => {
-                                    navigate("/course/create");
-                                }}
-                                className="w-fit bg-yellow-500 hover:bg-yellow-600 transition-all ease-in-out duration-300 rounded py-2 px-2 sm:px-4 font-semibold sm:text-lg cursor-pointer"
-                            >
-                                Create new course
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        navigate("/course/create");
+                                    }}
+                                    className="w-fit bg-yellow-500 hover:bg-yellow-600 transition-all ease-in-out duration-300 rounded py-2 px-2 sm:px-4 font-semibold sm:text-lg cursor-pointer"
+                                >
+                                    Create new course
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        navigate("/quiz/create");
+                                    }}
+                                    className="w-fit bg-green-500 hover:bg-green-600 transition-all ease-in-out duration-300 rounded py-2 px-2 sm:px-4 font-semibold sm:text-lg cursor-pointer"
+                                >
+                                    Create new quiz
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        navigate("/assessment/create");
+                                    }}
+                                    className="w-fit bg-purple-500 hover:bg-purple-600 transition-all ease-in-out duration-300 rounded py-2 px-2 sm:px-4 font-semibold sm:text-lg cursor-pointer"
+                                >
+                                    Create new assessment
+                                </button>
+                            </div>
                         </div>
 {
     myCoures?.length === 0 ? (
@@ -158,6 +180,7 @@ function AdminDeshboard() {
                         <th>Course Name</th>
                         <th>Course Description</th>
                         <th>Course Duration</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -168,6 +191,33 @@ function AdminDeshboard() {
                                 <td>{course?.title}</td>
                                 <td>{course?.description}</td>
                                 <td>{course?.duration}</td>
+                                <td>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            title="Manage lectures"
+                                            onClick={() => navigate("/course/displaylecture", { state: { ...course } })}
+                                            className="text-yellow-500 hover:text-yellow-400 text-2xl"
+                                        >
+                                            <BsCollectionPlayFill />
+                                        </button>
+
+                                        <button
+                                            title="Edit course"
+                                            onClick={() => navigate(`/course/edit/${course._id}`)}
+                                            className="text-green-500 hover:text-green-400 text-2xl"
+                                        >
+                                            <TiEdit />
+                                        </button>
+
+                                        <button
+                                            title="Delete course"
+                                            onClick={() => onCourseDelete(course._id)}
+                                            className="text-red-500 hover:text-red-400 text-2xl"
+                                        >
+                                            <BsTrash />
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                         );
                     })}

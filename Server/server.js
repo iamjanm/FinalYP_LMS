@@ -5,6 +5,8 @@ import connectionToDB from './config/dbConnection.js';
 import app from './app.js';
 
 const PORT = process.env.PORT || 5000;
+console.log("PORT:", PORT);
+
 
 /**
  * @Cloudinary configuration for file storage service

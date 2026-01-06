@@ -210,6 +210,21 @@ const authSlice = createSlice({
 
             })
             .addCase(login.fulfilled, (state, action) => {
+                const token = action?.payload?.token;
+                if (token) {
+                    localStorage.setItem('token', token);
+                    // set axios header
+                    try {
+                        // import is top-level; update default header
+                        // eslint-disable-next-line no-undef
+                        import('../../Helpers/axiosinstance').then(mod => {
+                            mod.default.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                        });
+                    } catch (e) {
+                        console.warn('Failed to set axios auth header dynamically', e);
+                    }
+                }
+
                 localStorage.setItem("data", JSON.stringify(action?.payload?.user));
                 localStorage.setItem("isLoggedIn", true);
                 localStorage.setItem("role", action?.payload?.user?.role);
@@ -219,6 +234,18 @@ const authSlice = createSlice({
 
             })
             .addCase(adminLogin.fulfilled, (state, action) => {
+                const token = action?.payload?.token;
+                if (token) {
+                    localStorage.setItem('token', token);
+                    try {
+                        import('../../Helpers/axiosinstance').then(mod => {
+                            mod.default.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                        });
+                    } catch (e) {
+                        console.warn('Failed to set axios auth header dynamically', e);
+                    }
+                }
+
                 localStorage.setItem("data", JSON.stringify(action?.payload?.user));
                 localStorage.setItem("isLoggedIn", true);
                 localStorage.setItem("role", action?.payload?.user?.role);

@@ -12,6 +12,7 @@ import AppError from "../utils/error.util.js";
 export const getAllCourse = asyncHandler(async (req, res, next) => {
     try {
         const courses = await Course.find({}).select('-lectures');
+        console.log("dffddfdf",courses);
         res.status(200).json({
             success: true,
             message: 'All course',
@@ -27,7 +28,7 @@ export const getAllCourse = asyncHandler(async (req, res, next) => {
 });
 /**
  * @GET_LECTURES_BY_COURSE_ID
- * Fetches lectures for a specific course.
+ * Fetches lectures for a specif
  */
 export const getLecturesByCourseId = asyncHandler(async (req, res, next) => {
     try {
@@ -43,14 +44,15 @@ export const getLecturesByCourseId = asyncHandler(async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: 'Course lectures fecthed sucesssfully ',
+            message: 'Course fetched sucesssfully',
             lectures: course.lectures,
+            course,
         })
 
 
     } catch (error) {
         return next(
-            new AppError(e.message, 500)
+            new AppError(error.message, 500)
         )
     }
 });
@@ -116,30 +118,55 @@ export const updateCourse = asyncHandler(async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        const course = await Course.findByIdAndUpdate(
+        // Prepare update data from body
+        const updateData = { ...req.body };
+
+        // If a new thumbnail is uploaded, upload it to Cloudinary and include in update
+        if (req.file) {
+            try {
+                const result = await cloudinary.v2.uploader.upload(req.file.path, {
+                    folder: 'lms'
+                });
+                if (result) {
+                    updateData.thumbnail = {
+                        public_id: result.public_id,
+                        secure_url: result.secure_url,
+                    };
+                }
+                await fs.rm(`uploads/${req.file.filename}`, { force: true });
+            } catch (error) {
+                return next(new AppError(error.message, 500));
+            }
+        }
+
+        const updatedCourse = await Course.findByIdAndUpdate(
             id,
             {
-                $set: req.body
+                $set: updateData
             },
             {
-                runValidators: true
+                runValidators: true,
+                new: true,
             }
-        )
-        if (!course) {
+        );
+
+        if (!updatedCourse) {
             return next(
                 new AppError("Course with given id does not exist", 500)
-            )
+            );
         }
+
+        res.status(200).json({
+            success: true,
+            message: 'Course Updated sucesssfully ',
+            course: updatedCourse,
+        });
 
     } catch (error) {
         return next(
             new AppError(error.message, 500)
         )
     }
-    res.status(200).json({
-        success: true,
-        message: 'Course Updated sucesssfully ',
-    })
 });
 /**
  * @DELETE_COURSE_BY_ID

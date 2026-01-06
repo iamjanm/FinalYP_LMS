@@ -38,7 +38,9 @@ function HomeLayout({ children }) {
         if (res?.payload?.sucess)
             navigate("/login");
     }
-
+const handleProfileChange = () => {
+    navigate('/user/profile');
+}
     return (
         <div className="min-h-[90vh]" >
             <div className="drawer absolute left-0 z-50 w-fit">
@@ -80,6 +82,18 @@ function HomeLayout({ children }) {
                         </li>
 
                         <li>
+                            <Link to="/quizzes">Quizzes</Link>
+                        </li>
+
+                        <li>
+                            <Link to="/notice">Notice</Link>
+                        </li>
+                         <li>
+                            <Link to="/assessments">Assessment</Link>
+                        </li>
+
+
+                        <li>
                             <Link to="/contact">Contact Us</Link>
                         </li>
 
@@ -107,7 +121,7 @@ function HomeLayout({ children }) {
                             <div className=' absolute bottom-4   w-[90%]'>
                                 <div className='w-full flex   gap-2  flex-col items-center justify-center'>
                                     <div className='btn-primary  hover:bg-blue-600 text-center cursor-pointer text-[1rem] hover:bg-blue-600 bg-blue-500 px-3 py-2 hover:text-white font-semibold rounded-md w-full '>
-                                        <Link to="/user/profile">Profile</Link>
+                                        <button onClick={handleProfileChange}>Profile</button>
                                     </div>
                                     <div className=' btn-secondary hover:text-white text-center text-[1rem] bg-pink-600 cursor-pointer px-3 py-2 font-semibold rounded-md w-full '>
                                         <Link onClick={handleLogout}>Logout</Link>

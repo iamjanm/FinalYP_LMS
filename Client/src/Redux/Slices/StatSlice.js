@@ -11,7 +11,10 @@ const initialState = {
 
 export const getStatsData = createAsyncThunk("stats/get", async () => {
     try {
-        const response = axiosInstance.get("/admin/stats/users");
+        const response = axiosInstance.get("/admin/users");
+        console.log("response",response);
+        
+        
         toast.promise(response, {
             loading: "Getting the stats........",
             success: (data) => {
@@ -21,6 +24,7 @@ export const getStatsData = createAsyncThunk("stats/get", async () => {
         })
         return (await response).data;
     } catch (error) {
+        if (error?.response?.status === 401) return null;
         toast.error(error?.response?.data?.message)
     }
 })
@@ -37,6 +41,7 @@ export const getAllUsers = createAsyncThunk("users/getAll", async () => {
         })
         return (await response).data;
     } catch (error) {
+        if (error?.response?.status === 401) return null;
         toast.error(error?.response?.data?.message)
     }
 })

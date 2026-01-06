@@ -50,12 +50,7 @@ const userSchema = new Schema({
         enum: ['USER', 'ADMIN'],
         default: 'USER'
     },
-    isVerified: {
-        type: Boolean,
-        default: false
-    },
-    emailVerificationToken: String,
-    emailVerificationExpiry: Date,
+
     forgotPasswordToken: String,
     forgotPasswordExpiry: Date
 }, {
@@ -104,18 +99,7 @@ userSchema.methods = {
         return resetToken;
     },
 
-    generateEmailVerificationToken: async function () {
-        const verificationToken = crypto.randomBytes(20).toString('hex');
 
-        this.emailVerificationToken = crypto
-            .createHash('sha256')
-            .update(verificationToken)
-            .digest('hex')
-            ;
-        this.emailVerificationExpiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
-        return verificationToken;
-    }
 }
 
 const User = model('User', userSchema);

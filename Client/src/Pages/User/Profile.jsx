@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import HomeLayout from "../../Layouts/HomeLayout";
 import { getuserData, adminChangePassword, logout } from "../../Redux/Slices/AuthSlice";
-import { cancelCourseBundle } from "../../Redux/Slices/RazorpaySlice";
+// import { cancelCourseBundle } from "../../Redux/Slices/RazorpaySlice";
 
 function Profile() {
     const userData = useSelector((state) => state?.auth?.data);
@@ -57,13 +57,7 @@ function Profile() {
             <div className="min-h-[90vh] flex items-center justify-center bg-[#171C22] backdrop-blur-sm">
                 <div className="my-10 flex flex-col gap-6 rounded-2xl p-6 text-white w-[90vw] sm:w-[420px] bg-gradient-to-b from-[#171C22] to-[#171C22] shadow-[0_0_25px_rgba(0,0,0,0.5)] border border-white/10 transition-all">
 
-                    {/* Verification Banner */}
-                    {!userData?.isVerified && (
-                        <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-3 text-center">
-                            <p className="text-yellow-300 font-semibold">Email not verified</p>
-                            <p className="text-yellow-200 text-sm">Please check your email and verify your account to access all features.</p>
-                        </div>
-                    )}
+
 
                     {/* Avatar */}
                     <div className="flex justify-center">

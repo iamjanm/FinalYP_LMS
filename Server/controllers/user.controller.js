@@ -7,12 +7,14 @@ import path from 'path'
 import asyncHandler from "../middlewares/asyncHAndler.middleware.js";
 import User from "../models/usermodel.js";
 import AppError from "../utils/error.util.js";
-import sendEmail from "../utils/sendEmail.js";
+import { log } from "console";
+// email sending removed — sendEmail no longer used
 
 const cookieOptions = {
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    secure: true
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
 };
 
 // Frontend URL helper — provides a safe fallback and warns if env var is missing
@@ -44,38 +46,20 @@ export const register = async (req, res, next) => {
         if (userExists) {
             return next(new AppError('Email already exists', 409));
         }
-
+        let role = 'USER';
         let user = await User.create({
             fullName,
             email,
+            role: role,
             password,
             avatar: {
                 public_id: email,
                 secure_url:
                     'https://res.cloudinary.com/du9jzqlpt/image/upload/v1674647316/avatar_drzgxv.jpg',
-            },
-            isVerified: false
+            }
         });
-
-        // Generate email verification token
-        const verificationToken = await user.generateEmailVerificationToken();
-        await user.save();
-
-        const verificationUrl = buildFrontendUrl(`/verify-email/${verificationToken}`);
-        const subject = 'Email Verification for LMS Account';
-        const message = `
-            <h1>Welcome to LMS!</h1>
-            <p>Please click the link below to verify your email address:</p>
-            <a href="${verificationUrl}">Verify Email</a>
-            <p>This link will expire in 24 hours.</p>
-        `;
-
-        try {
-            await sendEmail(email, subject, message);
-        } catch (emailError) {
-            console.log('Email sending failed:', emailError);
-            // Don't fail registration if email fails, but log it
-        }
+        console.log("user", user);
+        
 
         if (req.file) {
             const result = await cloudinary.v2.uploader.upload(req.file.path, {
@@ -96,12 +80,17 @@ export const register = async (req, res, next) => {
         const token = await user.generateJWTToken();
         user.password = undefined;
 
-        res.cookie('token', token, { ...cookieOptions, secure: false });
+        res.cookie('token', token, cookieOptions);
+
+        // Redirect user to frontend profile courses page after successful registration
+        const redirectUrl = buildFrontendUrl('/user/profilecourse');
+        res.set('Location', redirectUrl);
 
         res.status(201).json({
             success: true,
-            message: 'User registered successfully. Please check your email to verify your account.',
-            user: { fullName: user.fullName, email: user.email, isVerified: user.isVerified },
+            message: 'User registered successfully',
+            user: { fullName: user.fullName, role:'USER', email: user.email },
+            redirect: redirectUrl,
         });
 
     } catch (err) {
@@ -136,22 +125,20 @@ export const login = asyncHandler(async (req, res, next) => {
             );
         }
 
-        if (!user.isVerified) {
-            return next(
-                new AppError('Please verify your email before logging in', 403)
-            );
-        }
 
         const token = await user.generateJWTToken();
         user.password = undefined;
 
 
-        res.cookie('token', token, { ...cookieOptions, sameSite: 'None' });
+        // Use cookieOptions which already sets `sameSite` appropriately based on NODE_ENV
+// Set cookie and also return token in response to support header-based auth (useful for local dev)
+    res.cookie('token', token, cookieOptions);
 
-        res.status(200).json({
-            success: true,
-            message: 'User logged in Successfully',
-            user,
+    res.status(200).json({
+        success: true,
+        message: 'User logged in Successfully',
+        user,
+        token,
         })
 
     } catch (e) {
@@ -165,11 +152,8 @@ export const login = asyncHandler(async (req, res, next) => {
  * @LOGOUT - Logs out the user by clearing the token cookie
  */
 export const logout = asyncHandler(async (req, res, next) => {
-    res.cookie('token', null, {
-        secure: true,
-        maxAge: 0,
-        httpOnly: true
-    });
+    // Clear cookie — use same security rules as when setting it
+    res.cookie('token', null, { ...cookieOptions, maxAge: 0 });
 
     res.status(200).json({
         success: true,
@@ -237,21 +221,17 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
     const subject = 'Reset Password';
     const message = `You can reset your password by clicking <a href="${resetPasswordUrl}" target="_blank">Reset your password</a>\nIf the above link does not work for some reason then copy paste this link in new tab ${resetPasswordUrl}.\n If you have not requested this, kindly ignore.`;
 
-    try {
-        await sendEmail(email, subject, message);
+    // Email sending removed — return reset URL and token in response for frontend to handle delivery
+    const resetInfo = {
+        resetPasswordUrl,
+        resetToken
+    };
 
-        res.status(200).json({
-            success: true,
-            message: `Reset password token has been sent to ${email} Sucessfully`,
-        })
-    } catch (e) {
-        user.forgotPasswordExpiry = undefined;
-        user.forgotPasswordToken = undefined;
-
-        await user.save();
-        return next(new AppError(e.message, 500)
-        );
-    }
+    res.status(200).json({
+        success: true,
+        message: `Reset password token generated successfully`,
+        reset: resetInfo,
+    });
 });
 /**
  * @RESET_PASSWORD - Resets the password using a valid token
@@ -374,81 +354,7 @@ export const updateUser = asyncHandler(async (req, res, next) => {
     })
 })
 
-/**
- * @VERIFY_EMAIL - Verifies user email using token
- */
-export const verifyEmail = asyncHandler(async (req, res, next) => {
-    const { token } = req.params;
 
-    if (!token) {
-        return next(new AppError('Verification token is required', 400));
-    }
-
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-    const user = await User.findOne({
-        emailVerificationToken: hashedToken,
-        emailVerificationExpiry: { $gt: Date.now() }
-    });
-
-    if (!user) {
-        return next(new AppError('Invalid or expired verification token', 400));
-    }
-
-    user.isVerified = true;
-    user.emailVerificationToken = undefined;
-    user.emailVerificationExpiry = undefined;
-    await user.save();
-
-    res.status(200).json({
-        success: true,
-        message: 'Email verified successfully. You can now log in.'
-    });
-});
-
-/**
- * @RESEND_VERIFICATION_EMAIL - Resends verification email
- */
-export const resendVerificationEmail = asyncHandler(async (req, res, next) => {
-    const { email } = req.body;
-
-    if (!email) {
-        return next(new AppError('Email is required', 400));
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-        return next(new AppError('User not found', 404));
-    }
-
-    if (user.isVerified) {
-        return next(new AppError('Email is already verified', 400));
-    }
-
-    const verificationToken = await user.generateEmailVerificationToken();
-    await user.save();
-
-    const verificationUrl = buildFrontendUrl(`/verify-email/${verificationToken}`);
-    const subject = 'Email Verification for LMS Account';
-    const message = `
-        <h1>Welcome to LMS!</h1>
-        <p>Please click the link below to verify your email address:</p>
-        <a href="${verificationUrl}">Verify Email</a>
-        <p>This link will expire in 24 hours.</p>
-    `;
-
-    try {
-        await sendEmail(email, subject, message);
-        res.status(200).json({
-            success: true,
-            message: 'Verification email sent successfully'
-        });
-    } catch (emailError) {
-        console.log('Email sending failed:', emailError);
-        return next(new AppError('Failed to send verification email', 500));
-    }
-});
 
 /**
  * @ADMIN_LOGIN - Logs in the admin
@@ -468,12 +374,14 @@ export const adminLogin = asyncHandler(async (req, res, next) => {
         expiresIn: process.env.JWT_EXPIRY,
     });
 
-    res.cookie('token', token, { ...cookieOptions, sameSite: 'None' });
+    // Set cookie and also return token in response body so clients can use header-based auth in dev
+    res.cookie('token', token, cookieOptions);
 
     res.status(200).json({
         success: true,
         message: 'Admin logged in successfully',
-        user: { id: 'admin', email, role: 'ADMIN', fullName: 'Admin' }
+        user: { id: 'admin', email, role: 'ADMIN', fullName: 'Admin' },
+        token,
     });
 });
 

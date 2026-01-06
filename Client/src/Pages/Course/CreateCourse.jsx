@@ -99,6 +99,7 @@ function CreateCourse() {
                     {/* Back Button */}
                     <button
                         type="button"
+                        onClick={() => navigate(-1)}
                         className="absolute -left-3 top-8 w-10 h-10 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center justify-center text-cyan-400 shadow-lg transition-all duration-300 group"
                     >
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />

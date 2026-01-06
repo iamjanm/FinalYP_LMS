@@ -17,6 +17,7 @@ export const getCourseLectures= createAsyncThunk("/course/lecture/get", async(ci
         });
         return (await response).data;
     } catch (error) {
+        if (error?.response?.status === 401) return null;
         toast.error(error?.response?.data?.message);
     }
 });
@@ -36,6 +37,7 @@ export const addCourseLectures= createAsyncThunk("/course/lecture/add", async(da
         });
         return (await response).data;
     } catch (error) {
+        if (error?.response?.status === 401) return null;
         toast.error(error?.response?.data?.message);
     }
 });
@@ -51,6 +53,7 @@ export const deleteCourseLecture= createAsyncThunk("/course/lecture/delete", asy
         });
         return (await response).data;
     } catch (error) {
+        if (error?.response?.status === 401) return null;
         toast.error(error?.response?.data?.message);
     }
 });

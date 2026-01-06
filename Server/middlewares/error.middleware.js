@@ -2,6 +2,7 @@
  * @errorMiddleware - Global error handling middleware.
  * Formats common errors (AppError, Mongoose validation, duplicate keys) into
  * a consistent JSON response that includes a message and optional errors array.
+ * NOTE: The stack trace is not returned to the client for security/clarity.
  */
 const errorMiddleware = (err, req, res, next) => {
     let statusCode = err.statusCode || 500;
@@ -22,12 +23,20 @@ const errorMiddleware = (err, req, res, next) => {
         message = `${field} already exists`;
     }
 
+    // Map known Multer / file upload errors to 400 (Bad Request)
+    if (err.name === 'MulterError' || (err.message && err.message.toLowerCase().includes('unsupported file type'))) {
+        statusCode = 400;
+        message = err.message || 'Unsupported file upload';
+    }
+
+    // Log full error server-side for debugging, but don't leak stack to clients
+    console.error(err.stack);
+
     // Default AppError or other errors fall back to message/statusCode above
     res.status(statusCode).json({
         success: false,
         message,
         ...(errors ? { errors } : {}),
-        stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
     });
 };
 export default errorMiddleware;

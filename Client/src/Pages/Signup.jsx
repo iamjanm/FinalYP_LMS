@@ -62,10 +62,7 @@ function Signup() {
             toast.error("Full name is required");
             return;
         }
-        if (!signupData.avatar) {
-            toast.error("Profile picture is required");
-            return;
-        }
+       
         if (!signupData.password) {
             toast.error("Password is required");
             return;
@@ -87,10 +84,10 @@ if (signupData.password.length < 6) {
         }
 
         //checking password
-        if (!isPassword(signupData.password)) {
-            toast.error("Password should be 6 - 16 character long with atleast a number and special character",error.message);
-            return;
-        }
+        // if (!isPassword(signupData.password)) {
+        //     toast.error("Password should be 6 - 16 character long with atleast a number and special character",error.message);
+        //     return;
+        // }
 
         const formData = new FormData();
         formData.append("fullName", signupData.fullName);
@@ -119,11 +116,17 @@ if (signupData.password.length < 6) {
             toast.error(msg);
             return;
         }
+console.log('response', response);
 
-        if (response?.payload?.success) {
-            toast.success("Account created successfully! Please check your email to verify your account.");
-            navigate("/user/profile");
-        }
+       if (response?.success === true || response?.payload?.success === true) {
+    // if your API returns role from server
+    const userRole = response.user?.role || 'USER';
+    localStorage.setItem("role", userRole);
+
+    toast.success("Account created successfully!");
+    navigate("/user/profile");
+}
+
     }
     return (
         <HomeLayout>

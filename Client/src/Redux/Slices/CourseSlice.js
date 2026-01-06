@@ -15,11 +15,25 @@ export const getAllCourse = createAsyncThunk("/course/get", async ()=>{
         //     success:"courses loaded sucessfully",
         //     error:"Failed to get the courses",
         // });
+        console.log("response",response);
         return (await response).data.courses;
     } catch (error) {
+        if (error?.response?.status === 401) return [];
         toast.error(error?.response?.data?.message);    
     }
 })
+
+export const getCourseById = createAsyncThunk("/course/getById", async (id) => {
+    try {
+        const response = await axiosInstance.get(`/course/${id}`);
+        return (await response).data.course;
+    } catch (error) {
+        if (error?.response?.status === 401) return null;
+        toast.error(error?.response?.data?.message);
+        return null;
+    }
+});
+
 
 export const createNewCourse= createAsyncThunk("/course/create", async(data)=>{
     try {
@@ -40,6 +54,7 @@ export const createNewCourse= createAsyncThunk("/course/create", async(data)=>{
         return (await response).data;
         
     } catch (error) {
+        if (error?.response?.status === 401) return null;
         toast.error(error?.response?.data?.message);
     }
 })
@@ -54,43 +69,55 @@ export const deleteCourse = createAsyncThunk("/course/delete", async (id)=>{
         });
         return (await response).data;
     } catch (error) {
+        if (error?.response?.status === 401) return null;
         toast.error(error?.response?.data?.message);    
     }
 })
 
-export const updateCourse = createAsyncThunk("/course/update", async (data) => {
+export const updateCourse = createAsyncThunk(
+  "/course/update",
+  async (data) => {
     try {
-      // creating the form data from user data
+      if (!data?._id) {
+        toast.error("Course id is missing — update cancelled.");
+        return null;
+      }
       const formData = new FormData();
-      formData.append("title", data.title);
-      formData.append("category", data.category);
-      formData.append("createdBy", data.createdBy);
-      formData.append("description", data.description);
-      // backend is not allowing change of thumbnail
+      if (data.title !== undefined) formData.append("title", data.title);
+      if (data.category !== undefined) formData.append("category", data.category);
+      if (data.createdBy !== undefined) formData.append("createdBy", data.createdBy);
+      if (data.description !== undefined) formData.append("description", data.description);
+
       if (data.thumbnail) {
         formData.append("thumbnail", data.thumbnail);
       }
-  
-      const res = axiosInstance.put(`/course/${data.id}`, {
-        title: data.title,
-        category: data.category,
-        createdBy: data.createdBy,
-        description: data.description,
-      });
-  
+
+      const res = axiosInstance.put(
+        `/course/${data._id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
       toast.promise(res, {
         loading: "Updating the course...",
         success: "Course updated successfully",
         error: "Failed to update course",
       });
-  
+
       const response = await res;
       return response.data;
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message);
+      return null;
     }
-  });
+  }
+);
+
 
 const courseSlice =createSlice({
     name :"course",

@@ -1,4 +1,4 @@
-import { useState } from "react";
+  import { useState } from "react";
 import { toast } from 'react-hot-toast'
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
@@ -37,6 +37,18 @@ const [showPassword, setShowPassword] = useState(false);
   //dispatch admin login action
   const response = await dispatch(adminLogin(loginData));
   if (response?.payload?.success) {
+   const token = response?.payload?.token;
+   if (token) {
+     localStorage.setItem('token', token);
+     try {
+       // set axios header immediately so subsequent requests work
+       import('../Helpers/axiosinstance').then(mod => {
+         mod.default.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+       });
+     } catch (e) {
+       console.warn('Failed to set axios header', e);
+     }
+   }
    navigate("/admin/deshboard");
    setloginData({
     email: "",

@@ -1,27 +1,32 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import HomeLayout from "../../Layouts/HomeLayout";
-import { updateCourse } from "../../Redux/Slices/CourseSlice";
+import { updateCourse, getCourseById } from "../../Redux/Slices/CourseSlice";
+import { useParams } from "react-router-dom";
+import { useEffect } from "react";
 
   function EditCourse(){
 
     const dispatch =useDispatch();
     const navigate =useNavigate();
     const {state }=useLocation();
-    // console.log(state)
-    const [userInput, setUserInput]=useState({
-        id:state?._id,
-        title:state?.title,
-        category:state?.category,
-        description:state?.description,
-        createdBy:state?.createdBy,
-        thumbnail:null,
-        previewImage:state.thumbnail?.secure_url,
-    });
+    const { id } = useParams();
+    const initialCourse = useRef(state || {});
+   const [userInput, setUserInput] = useState({
+  _id: state?._id || id || "",
+  title: state?.title || "",
+  category: state?.category || "",
+  description: state?.description || "",
+  createdBy: state?.createdBy || "",
+  thumbnail: null,
+  previewImage: state?.thumbnail?.secure_url || "",
+});
+
+console.log("updateCourse",updateCourse);
 
      function handleImageUpload(e){
         e.preventDefault();
@@ -50,22 +55,95 @@ import { updateCourse } from "../../Redux/Slices/CourseSlice";
 
     async function OnFormSubmit(e){
         e.preventDefault();
-        if(!userInput.title ||!userInput.description||!userInput.category ){
+        if(!userInput._id){
+            toast.error("Course id is missing. Open Edit from the course list or reload the course.");
+            return;
+        }
+        if(!userInput.title || !userInput.description || !userInput.category ){
             toast.error("All fields are mandatory");
             return;
         }
 
-        const response = await dispatch(updateCourse(userInput));
+        // build payload with only changed fields
+        const payload = { _id: userInput._id };
+        ["title","category","description","createdBy"].forEach(field=>{
+            if (userInput[field] !== initialCourse.current?.[field]) {
+                payload[field] = userInput[field];
+            }
+        });
+        if (userInput.thumbnail) {
+            payload.thumbnail = userInput.thumbnail;
+        }
+
+        if(Object.keys(payload).length === 1){
+            toast("No changes detected");
+            return;
+        }
+
+        const response = await dispatch(updateCourse(payload));
         if(response?.payload?.success){
-            setUserInput({
-                title:"",
-                category:"",
-                description:"",
-                thumbnail:null,
-            });
+            // if server returned updated course, update local state
+            const updatedCourse = response.payload.course;
+            if (updatedCourse) {
+                setUserInput({
+                    _id: updatedCourse._id || userInput._id,
+                    title: updatedCourse.title || userInput.title,
+                    category: updatedCourse.category || userInput.category,
+                    description: updatedCourse.description || userInput.description,
+                    createdBy: updatedCourse.createdBy || userInput.createdBy,
+                    thumbnail: null,
+                    previewImage: updatedCourse.thumbnail?.secure_url || userInput.previewImage || "",
+                });
+                initialCourse.current = { ...initialCourse.current, ...payload, thumbnail: updatedCourse.thumbnail || initialCourse.current.thumbnail };
+            } else {
+                // fallback: update only changed fields in the form state
+                setUserInput(prev => ({...prev, ...payload, thumbnail: null}));
+            }
             navigate("/courses");
         }
+        console.log("response",response);
     }
+
+    // If component opened directly with an :id param, fetch the course to populate the form
+    useEffect(() => {
+        async function loadCourse() {
+            if (!initialCourse.current || Object.keys(initialCourse.current).length === 0) {
+                if (id) {
+                    const result = await dispatch(getCourseById(id));
+                    if (result && result.payload) {
+                        const course = result.payload;
+                        if (course) {
+                            setUserInput({
+                                _id: course._id || id,
+                                title: course.title || "",
+                                category: course.category || "",
+                                description: course.description || "",
+                                createdBy: course.createdBy || "",
+                                thumbnail: null,
+                                previewImage: course.thumbnail?.secure_url || "",
+                            });
+                            initialCourse.current = course;
+                            return;
+                        }
+                    }
+                    toast.error("Failed to load course. Please try again.");
+                    navigate('/courses');
+                }
+            }
+        }
+        loadCourse();
+    }, [id, dispatch, navigate]);
+
+    // If opened without id/state, redirect to courses list
+    useEffect(() => {
+        if (!userInput._id && !id && (!state || Object.keys(state).length === 0)) {
+            toast.error("No course selected for editing");
+            navigate('/courses');
+        }
+    }, [userInput._id, id, state, navigate]);
+    
+    console.log("userInput",userInput);
+    
     return(
         <HomeLayout>
             <div className="flex items-center justify-center h-[100vh]">
@@ -74,7 +152,7 @@ import { updateCourse } from "../../Redux/Slices/CourseSlice";
                     className="flex flex-col justify-center gap-5 rounded-lg p-4 mt-5 text-white w-[80vw] md:w-[700px] sm:my-10   relative shadow-[0_0_10px_black]  "
                 >
                     <div>
-                        <Link to={"/"} className=" absolute left-2  text-lg text-accent cursor-pointer">
+                        <Link to={"/admin/deshboard"} className=" absolute left-2  text-lg text-accent cursor-pointer">
                             <AiOutlineArrowLeft/>
                         </Link>
                     </div>
